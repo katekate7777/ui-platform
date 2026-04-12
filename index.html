@@ -260,7 +260,8 @@ const text = composeInput.value.trim();
 if (text.length < 3) return;
 addCardToFeed(text, currentId, ‘@you’, true);
 composeInput.value = ‘’;
-resetCompose();
+composeInput.blur();
+setTimeout(() => { resetCompose(); composeInput.placeholder = ‘value stays, junk burns 🔥’; }, 100);
 });
 
 function resetCompose() {
