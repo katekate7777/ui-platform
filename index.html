@@ -197,17 +197,23 @@
   </div>
 </div>
 <script>
-  // ── State ──
-  const SAVES_PER_DIAMOND = 5;
-  let totalDiamonds = 3;
-  let savedItems = [];
-  let currentId = 'human';
-  let paused = false;
-  let pos = 0;
-  const SPEED = 0.4;
+  // Global error handler
+  window.onerror = function(msg, src, line) {
+    console.log('UI Error:', msg, 'line:', line);
+    return true;
+  };
 
-try { const d = localStorage.getItem(‘ui_diamonds’); if (d) totalDiamonds = parseInt(d); } catch(e){}
-try { const s = localStorage.getItem(‘ui_saved’);    if (s) savedItems = JSON.parse(s); } catch(e){}
+// ── State ──
+const SAVES_PER_DIAMOND = 5;
+let totalDiamonds = 3;
+let savedItems = [];
+let currentId = ‘human’;
+let paused = false;
+let pos = 0;
+const SPEED = 0.4;
+
+try { const d = window.localStorage ? localStorage.getItem(‘ui_diamonds’) : null; if (d) totalDiamonds = parseInt(d); } catch(e){}
+try { const s = window.localStorage ? localStorage.getItem(‘ui_saved’) : null; if (s) savedItems = JSON.parse(s); } catch(e){}
 
 // ── DOM refs ──
 const feedWrap     = document.getElementById(‘feedWrap’);
@@ -351,7 +357,7 @@ if (isSaved) {
   if (n % SAVES_PER_DIAMOND === 0) {
     totalDiamonds++;
     userBarName.textContent = 'kate' + '💎'.repeat(totalDiamonds);
-    try { localStorage.setItem('ui_diamonds', totalDiamonds); } catch(e){}
+    try { if(window.localStorage) localStorage.setItem('ui_diamonds', totalDiamonds); } catch(e){}
     showToast('💎 +1 diamond earned!');
   }
 }
@@ -360,7 +366,7 @@ if (isSaved) {
 }
 
 function persistSaved() {
-try { localStorage.setItem(‘ui_saved’, JSON.stringify(savedItems)); } catch(e){}
+try { if(window.localStorage) localStorage.setItem(‘ui_saved’, JSON.stringify(savedItems)); } catch(e){}
 }
 
 // ── Bag ──
