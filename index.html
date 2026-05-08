@@ -11,11 +11,11 @@
     --text:#f0ece4; --muted:#555; --accent:#e8d5a3;
     --burn:#ff4422; --human:#7eb8a4; --ai:#a48fd4; --mix:#d4a574;
   }
-  body { background:#1a1a2e; display:flex; justify-content:center; align-items:center; min-height:100vh; font-family:'Courier New',Courier,monospace; padding:20px; }
-  .phone { width:375px; height:812px; background:var(--bg); border-radius:44px; border:8px solid #222; overflow:hidden; position:relative; box-shadow:0 40px 80px rgba(0,0,0,0.6),inset 0 0 0 1px #333; display:flex; flex-direction:column; }
+  body { background:var(--bg); min-height:100vh; font-family:'Courier New',Courier,monospace; display:flex; flex-direction:column; }
+  .phone { width:100%; min-height:100vh; background:var(--bg); overflow:hidden; position:relative; display:flex; flex-direction:column; max-width:900px; margin:0 auto; }
   .status { padding:14px 24px 8px; display:flex; justify-content:space-between; font-size:11px; color:var(--muted); letter-spacing:0.05em; }
   .header { padding:4px 20px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
-  .logo { font-family:Georgia,'Times New Roman',serif; font-size:28px; color:var(--accent); letter-spacing:-0.02em; }
+  .logo { font-family:Georgia,'Times New Roman',serif; font-size:36px; color:var(--accent); letter-spacing:-0.02em; }
   .logo span { color:var(--text); opacity:0.4; font-size:11px; font-family:'Courier New',Courier,monospace; display:block; letter-spacing:0.15em; margin-top:-4px; }
   .header-right { display:flex; gap:16px; align-items:center; }
   .icon-btn { width:32px; height:32px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; }
@@ -51,7 +51,7 @@
   .dot.tech { background:#7eb8d4; }
   .dot.econ { background:#a8d474; }
   .dot.emo  { background:#d474a8; }
-  .card-content { color:var(--text); font-size:13px; line-height:1.7; margin-bottom:8px; font-family:Georgia,'Times New Roman',serif; }
+  .card-content { color:var(--text); font-size:15px; line-height:1.8; margin-bottom:8px; font-family:Georgia,'Times New Roman',serif; }
   .translate-btn { font-size:9px; color:#333; cursor:pointer; letter-spacing:0.08em; margin-bottom:8px; display:inline-block; border-bottom:1px dashed #2a2a2a; }
   .translate-btn:hover { color:var(--accent); }
   .card-translation { font-size:11px; color:var(--muted); font-family:'Courier New',Courier,monospace; margin-bottom:8px; padding-left:10px; border-left:2px solid var(--border); line-height:1.5; font-style:italic; }
@@ -96,7 +96,7 @@
 </head>
 <body>
 <div class="phone">
-  <div class="status"><span>9:41</span><span>5G 100%</span></div>
+  
   <div class="header">
     <div class="logo">UI<span>WHERE U MEETS I</span></div>
     <div class="header-right">
