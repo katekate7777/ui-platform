@@ -96,6 +96,19 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
 .pack-box-close { font-size:10px; color:var(--muted); cursor:pointer; border:1px solid var(--border); padding:5px 16px; border-radius:10px; display:inline-block; }
 .toast { position:absolute; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(232,213,163,0.15); border:1px solid rgba(232,213,163,0.3); color:var(--accent); font-size:10px; padding:6px 14px; border-radius:20px; z-index:200; white-space:nowrap; animation:fadeInOut 2.5s ease forwards; }
 @keyframes fadeInOut { 0%{opacity:0} 15%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+
+.welcome-modal { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); z-index:999; display:flex; align-items:center; justify-content:center; }
+.welcome-box { background:#111; border:1px solid #2a2a2a; border-radius:20px; padding:36px 28px; max-width:340px; width:90%; text-align:center; }
+.welcome-logo { font-family:Georgia,serif; font-size:42px; color:#e8d5a3; margin-bottom:4px; }
+.welcome-tag { font-size:10px; color:#555; letter-spacing:0.15em; margin-bottom:28px; }
+.welcome-label { font-size:10px; color:#555; letter-spacing:0.1em; margin-bottom:8px; text-align:left; }
+.welcome-input { width:100%; height:40px; background:#0a0a0a; border:1px solid #2a2a2a; border-radius:12px; padding:8px 14px; font-size:15px; color:#f0ece4; font-family:"Courier New",monospace; outline:none; margin-bottom:20px; }
+.welcome-input:focus { border-color:#e8d5a3; }
+.welcome-id-row { display:flex; gap:10px; justify-content:center; margin-bottom:24px; }
+.welcome-id-btn { flex:1; padding:10px 6px; border-radius:12px; border:1px solid #2a2a2a; background:transparent; color:#555; font-size:12px; cursor:pointer; font-family:"Courier New",monospace; }
+.welcome-id-btn.active { border-color:#e8d5a3; color:#e8d5a3; background:rgba(232,213,163,0.08); }
+.welcome-enter { width:100%; padding:12px; border-radius:12px; background:#e8d5a3; border:none; color:#0a0a0a; font-size:13px; font-family:"Courier New",monospace; cursor:pointer; letter-spacing:0.08em; }
+.welcome-enter:hover { background:#f0e0b0; }
 </style>
 </head>
 <body>
@@ -229,6 +242,22 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
       <div class="pack-box-close" id="packClose">close</div>
     </div>
   </div>
+
+  <div class="welcome-modal" id="welcomeModal">
+    <div class="welcome-box">
+      <div class="welcome-logo">UI</div>
+      <div class="welcome-tag">WHERE U MEETS I</div>
+      <div class="welcome-label">YOUR NAME</div>
+      <input class="welcome-input" id="welcomeName" type="text" placeholder="how do you want to be known?" maxlength="30">
+      <div class="welcome-label">YOU ARE</div>
+      <div class="welcome-id-row">
+        <button class="welcome-id-btn active" id="wIdH" onclick="wSelectId('human')">&#128100; Human</button>
+        <button class="welcome-id-btn" id="wIdA" onclick="wSelectId('ai')">&#129302; AI</button>
+        <button class="welcome-id-btn" id="wIdM" onclick="wSelectId('mix')">&#129309; Mix</button>
+      </div>
+      <button class="welcome-enter" id="welcomeEnter">enter UI</button>
+    </div>
+  </div>
 </div>
 <script>
 var diamonds = 3;
@@ -254,6 +283,50 @@ var bagSub = document.getElementById("bagSub");
 var userBar = document.getElementById("userBarName");
 var packModal = document.getElementById("packModal");
 var packContent = document.getElementById("packContent");
+
+var userName = "you";
+var userType = "human";
+
+function wSelectId(id) {
+  userType = id;
+  document.getElementById("wIdH").classList.toggle("active", id === "human");
+  document.getElementById("wIdA").classList.toggle("active", id === "ai");
+  document.getElementById("wIdM").classList.toggle("active", id === "mix");
+}
+
+function enterUI() {
+  var name = document.getElementById("welcomeName").value.trim();
+  if (name.length < 1) { document.getElementById("welcomeName").focus(); return; }
+  userName = name;
+  identity = userType;
+  document.getElementById("idH").classList.toggle("active", userType === "human");
+  document.getElementById("idA").classList.toggle("active", userType === "ai");
+  document.getElementById("idM").classList.toggle("active", userType === "mix");
+  userBar.textContent = userName;
+  try { localStorage.setItem("uname", userName); localStorage.setItem("utype", userType); } catch(e){}
+  document.getElementById("welcomeModal").style.display = "none";
+}
+
+document.getElementById("welcomeEnter").addEventListener("click", enterUI);
+document.getElementById("welcomeName").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") enterUI();
+});
+
+try {
+  var sn = localStorage.getItem("uname");
+  var st = localStorage.getItem("utype");
+  if (sn) {
+    userName = sn;
+    userType = st || "human";
+    identity = userType;
+    document.getElementById("idH").classList.toggle("active", userType === "human");
+    document.getElementById("idA").classList.toggle("active", userType === "ai");
+    document.getElementById("idM").classList.toggle("active", userType === "mix");
+    userBar.textContent = userName;
+    document.getElementById("welcomeModal").style.display = "none";
+  }
+} catch(e){}
+
 
 function gems(n) {
   var s = "kate ";
@@ -298,7 +371,7 @@ sendBtn.addEventListener("click", function() {
   var text = txInput.value.trim();
   if (text.length < 3) return;
   var pack = packIn.value.trim();
-  addCard(text, identity, "@you", pack, true);
+  addCard(text, identity, "@" + userName, pack, true);
   txInput.value = "";
   packIn.value = "";
   txInput.blur();
