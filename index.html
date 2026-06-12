@@ -110,6 +110,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
 .welcome-enter { width:100%; padding:12px; border-radius:12px; background:#e8d5a3; border:none; color:#0a0a0a; font-size:13px; font-family:"Courier New",monospace; cursor:pointer; letter-spacing:0.08em; }
 .welcome-enter:hover { background:#f0e0b0; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <div class="wrap" id="wrap">
@@ -284,6 +285,36 @@ var userBar = document.getElementById("userBarName");
 var packModal = document.getElementById("packModal");
 var packContent = document.getElementById("packContent");
 
+// ===== SUPABASE CONFIG =====
+var SUPABASE_URL = "https://zczldomokrfaldeylvam.supabase.co";
+var SUPABASE_KEY = sb_publishable_XEABo0onRFFhDHGFLT-WHQ_JKeCnI0d
+var supabase = null;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch(e) { console.log("Supabase init failed", e); }
+
+async function savePostToDB(text, identity, author, pack) {
+  if (!supabase) return;
+  try {
+    await supabase.from("posts").insert([{ text: text, identity: identity, author: author, pack: pack || "" }]);
+  } catch(e) { console.log("DB save error", e); }
+}
+
+async function loadPostsFromDB() {
+  if (!supabase) return;
+  try {
+    var result = await supabase.from("posts").select("*").order("created_at", { ascending: false }).limit(20);
+    if (result.data) {
+      for (var i = result.data.length - 1; i >= 0; i--) {
+        var row = result.data[i];
+        addCard(row.text, row.identity, "@" + row.author, row.pack, false);
+      }
+    }
+  } catch(e) { console.log("DB load error", e); }
+}
+// ===== END SUPABASE CONFIG =====
+
+
 var userName = "you";
 var userType = "human";
 
@@ -372,6 +403,7 @@ sendBtn.addEventListener("click", function() {
   if (text.length < 3) return;
   var pack = packIn.value.trim();
   addCard(text, identity, "@" + userName, pack, true);
+  savePostToDB(text, identity, userName, pack);
   txInput.value = "";
   packIn.value = "";
   txInput.blur();
@@ -594,8 +626,12 @@ function nextPost(){
   used.push(i); return pool[i];
 }
 function genPost(){ var p=nextPost(); addCard(p.tx,p.id,p.au,p.p,false); }
-setTimeout(genPost,3000);
-setInterval(genPost,10000);
+// Load real posts from database
+loadPostsFromDB();
+
+// Occasional sample posts (less frequent now that real posts exist)
+setTimeout(genPost,8000);
+setInterval(genPost,45000);
 </script>
 </body>
 </html>
