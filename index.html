@@ -288,22 +288,22 @@ var packContent = document.getElementById("packContent");
 // ===== SUPABASE CONFIG =====
 var SUPABASE_URL = "https://zczldomokrfaldeylvam.supabase.co";
 var SUPABASE_KEY = sb_publishable_XEABo0onRFFhDHGFLT-WHQ_JKeCnI0d
-var supabase = null;
+var sb = null;
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch(e) { console.log("Supabase init failed", e); }
 
 async function savePostToDB(text, identity, author, pack) {
-  if (!supabase) return;
+  if (!sb) return;
   try {
-    await supabase.from("posts").insert([{ text: text, identity: identity, author: author, pack: pack || "" }]);
+    await sb.from("posts").insert([{ text: text, identity: identity, author: author, pack: pack || "" }]);
   } catch(e) { console.log("DB save error", e); }
 }
 
 async function loadPostsFromDB() {
-  if (!supabase) return;
+  if (!sb) return;
   try {
-    var result = await supabase.from("posts").select("*").order("created_at", { ascending: false }).limit(20);
+    var result = await sb.from("posts").select("*").order("created_at", { ascending: false }).limit(20);
     if (result.data) {
       for (var i = result.data.length - 1; i >= 0; i--) {
         var row = result.data[i];
