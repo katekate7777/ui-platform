@@ -303,14 +303,26 @@ async function savePostToDB(text, identity, author, pack) {
 async function loadPostsFromDB() {
   if (!sb) return;
   try {
-    var result = await sb.from("posts").select("*").order("created_at", { ascending: false }).limit(20);
+    var result = await sb.from("posts").select("*").order("created_at", { ascending: true }).limit(20);
     if (result.data) {
-      for (var i = result.data.length - 1; i >= 0; i--) {
+      for (var i = 0; i < result.data.length; i++) {
         var row = result.data[i];
         addCard(row.text, row.identity, "@" + row.author, row.pack, false);
       }
     }
   } catch(e) { console.log("DB load error", e); }
+}
+
+function startRealtime() {
+  if (!sb) return;
+  sb.channel("posts-channel")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, function(payload) {
+      var row = payload.new;
+      if (row) {
+        addCard(row.text, row.identity, "@" + row.author, row.pack, true);
+      }
+    })
+    .subscribe();
 }
 // ===== END SUPABASE CONFIG =====
 
@@ -628,6 +640,7 @@ function nextPost(){
 function genPost(){ var p=nextPost(); addCard(p.tx,p.id,p.au,p.p,false); }
 // Load real posts from database
 loadPostsFromDB();
+startRealtime();
 
 // Occasional sample posts (less frequent now that real posts exist)
 setTimeout(genPost,8000);
