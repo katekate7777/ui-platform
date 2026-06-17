@@ -192,7 +192,7 @@ var saved = [];
 var identity = "human";
 var paused = false;
 var pos = 0;
-var SPEED = 0.4;
+var SPEED = 0.28;
 
 try { var dd = localStorage.getItem("uid"); if(dd) diamonds = parseInt(dd)||3; } catch(e){}
 try { var ss = localStorage.getItem("uis"); if(ss) saved = JSON.parse(ss)||[]; } catch(e){}
@@ -220,37 +220,29 @@ try {
 
 async function savePostToDB(text, identity, author, pack) {
   if (!sb) return;
+  myLastInsertText = text;
   try {
     await sb.from("posts").insert([{ text: text, identity: identity, author: author, pack: pack || "" }]);
   } catch(e) { console.log("DB save error", e); }
 }
 
-var hasLoadedInitial = false;
-async function loadPostsFromDB() {
-  if (!sb || hasLoadedInitial) return;
-  hasLoadedInitial = true;
-  try {
-    var result = await sb.from("posts").select("*").order("created_at", { ascending: false }).limit(12);
-    if (result.data) {
-      var rows = result.data.slice().reverse();
-      for (var i = 0; i < rows.length; i++) {
-        var row = rows[i];
-        addCard(row.text, row.identity, "@" + row.author, row.pack, false);
-      }
-    }
-  } catch(e) { console.log("DB load error", e); }
-}
+// We do NOT load historical posts - only show what happens live from now on.
+// This makes the feed feel like "right now", not an archive.
 
+var myLastInsertText = null;
 function startRealtime() {
   if (!sb) return;
-  sb.channel("posts-channel")
+  sb.channel("posts-channel-" + Math.random())
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, function(payload) {
       var row = payload.new;
-      if (row) {
-        addCard(row.text, row.identity, "@" + row.author, row.pack, true);
-      }
+      if (!row) return;
+      // Avoid double-adding our own just-sent post (we already added it locally)
+      if (row.text === myLastInsertText) { myLastInsertText = null; return; }
+      addCard(row.text, row.identity, "@" + row.author, row.pack, true);
     })
-    .subscribe();
+    .subscribe(function(status) {
+      console.log("Realtime status:", status);
+    });
 }
 // ===== END SUPABASE CONFIG =====
 
@@ -395,15 +387,10 @@ function addCard(text, id, author, pack, isNew) {
 
   var fillEl = card.querySelector(".timer-fill");
   var startTime = Date.now();
-  var lifespan = CARD_LIFESPAN_MS;
+  card._lifespan = CARD_LIFESPAN_MS;
   var tickInterval = setInterval(function() {
-    var savedNow = card.querySelector(".save-btn.saved");
-    if (savedNow) {
-      fillEl.style.width = "100%";
-      return;
-    }
     var elapsed = Date.now() - startTime;
-    var pct = Math.max(0, 100 - (elapsed / lifespan) * 100);
+    var pct = Math.max(0, 100 - (elapsed / card._lifespan) * 100);
     fillEl.style.width = pct + "%";
     if (pct <= 15 && !card.classList.contains("burning")) {
       fillEl.classList.add("dying");
@@ -422,6 +409,8 @@ function addCard(text, id, author, pack, isNew) {
       setTimeout(function() { if (card.parentNode) card.parentNode.removeChild(card); }, 650);
     }
   }, 1000);
+  card._startTime = startTime;
+  card._fillEl = fillEl;
 
   if (isNew) {
     paused = true;
@@ -452,40 +441,43 @@ document.getElementById("packClose").addEventListener("click", function(){ packM
 packModal.addEventListener("click", function(e){ if(e.target===packModal) packModal.classList.remove("open"); });
 
 function toggleSave(el) {
-  var isSaved = el.classList.contains("saved");
+  // Once saved, locked - cannot unsave or save again (prevents farming life-extension)
+  if (el.classList.contains("saved") || el.classList.contains("locked")) return;
   var sc = el.querySelector(".sc");
   var card = el.closest(".card");
   var text = card.querySelector(".card-content").textContent;
   var packEl = card.querySelector(".pack-btn");
   var pack = packEl ? packEl.getAttribute("data-pack") : "";
   var n = parseInt(sc.textContent);
-  if (isSaved) {
-    el.classList.remove("saved");
-    el.innerHTML = "save <span class=\"sc\">" + (n-1) + "</span>";
-    for(var i=0; i<saved.length; i++){ if(saved[i].t===text){ saved.splice(i,1); break; } }
-    persist();
+
+  el.classList.add("saved");
+  el.classList.add("locked");
+  el.innerHTML = "&#128142; <span class=\"sc\">" + (n+1) + "</span>";
+  var tagEl = card.querySelector(".tag");
+  var authEl = card.querySelector(".author");
+  var timeEl = card.querySelector(".card-time");
+  saved.unshift({
+    t: text,
+    tc: tagEl ? tagEl.className.replace("tag ","") : "human",
+    tl: tagEl ? tagEl.innerHTML : "HUMAN",
+    au: authEl ? authEl.textContent : "@you",
+    ti: timeEl ? timeEl.textContent : "just now",
+    p: pack
+  });
+  persist();
+  // Each save extends this card's life by 30 seconds and pulls it back from the brink
+  card._lifespan = (card._lifespan || CARD_LIFESPAN_MS) + 30000;
+  card.classList.remove("burning");
+  var ov = card.querySelector(".burn-overlay");
+  if (ov) ov.remove();
+  if (card._fillEl) card._fillEl.classList.remove("dying");
+  if((n+1)%5===0){
+    diamonds++;
+    gems(diamonds);
+    try{ localStorage.setItem("uid", diamonds); }catch(e){}
+    showToast("+1 diamond! &#9201; +30s of life given");
   } else {
-    el.classList.add("saved");
-    el.innerHTML = "&#128142; <span class=\"sc\">" + (n+1) + "</span>";
-    var tagEl = card.querySelector(".tag");
-    var authEl = card.querySelector(".author");
-    var timeEl = card.querySelector(".card-time");
-    saved.unshift({
-      t: text,
-      tc: tagEl ? tagEl.className.replace("tag ","") : "human",
-      tl: tagEl ? tagEl.innerHTML : "HUMAN",
-      au: authEl ? authEl.textContent : "@you",
-      ti: timeEl ? timeEl.textContent : "just now",
-      p: pack
-    });
-    persist();
-    if((n+1)%5===0){
-      diamonds++;
-      gems(diamonds);
-      try{ localStorage.setItem("uid", diamonds); }catch(e){}
-      showToast("+1 diamond!");
-    }
-    showToast("&#127890; saved! tap pack to open");
+    showToast("&#127890; saved - +30s of life given");
   }
 }
 
@@ -577,8 +569,7 @@ ctrl.addEventListener("click", function(e){
 requestAnimationFrame(scrollStep);
 
 
-// Load posts and start realtime
-loadPostsFromDB();
+// Start realtime - live feed only, no history
 startRealtime();
 </script>
 </body>
