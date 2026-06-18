@@ -219,10 +219,18 @@ try {
 } catch(e) { console.log("Supabase init failed", e); }
 
 async function savePostToDB(text, identity, author, pack) {
-  if (!sb) return;
+  if (!SUPABASE_URL || SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") return;
   myLastInsertText = text;
   try {
-    await sb.from("posts").insert([{ text: text, identity: identity, author: author, pack: pack || "" }]);
+    await fetch(SUPABASE_URL + "/rest/v1/posts", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({ text: text, identity: identity, author: author, pack: pack || "" })
+    });
   } catch(e) { console.log("DB save error", e); }
 }
 
