@@ -8,7 +8,7 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
   --bg:#0a0a0a; --surface:#111; --border:#1e1e1e;
-  --text:#f0ece4; --muted:#555; --accent:#e8d5a3;
+  --text:#f0ece4; --muted:#8a8a8a; --accent:#e8d5a3;
   --burn:#ff4422; --human:#7eb8a4; --ai:#a48fd4; --mix:#d4a574;
 }
 body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier,monospace; display:flex; flex-direction:column; }
@@ -19,8 +19,8 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
 .header-right { display:flex; gap:16px; }
 .icon-btn { width:32px; height:32px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; }
 .filters { padding:12px 20px; display:flex; flex-direction:row; flex-wrap:nowrap; gap:8px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border); flex-shrink:0; }
-.filter-tab { padding:6px 14px; border-radius:20px; font-size:11px; white-space:nowrap; cursor:pointer; border:1px solid var(--border); color:var(--muted); background:transparent; display:inline-flex; align-items:center; flex-shrink:0; }
-.filter-tab.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+.filter-tab { padding:7px 14px; border-radius:20px; font-size:12px; white-space:nowrap; cursor:pointer; border:1px solid var(--border); color:var(--text); opacity:0.65; background:transparent; display:inline-flex; align-items:center; flex-shrink:0; font-weight:500; }
+.filter-tab.active { background:var(--accent); color:var(--bg); border-color:var(--accent); opacity:1; }
 .feed-wrap { flex:1; overflow:hidden; position:relative; min-height:400px; }
 .feed-wrap::before,.feed-wrap::after { content:""; position:absolute; left:0; right:0; height:40px; z-index:10; pointer-events:none; }
 /* .feed-wrap::before removed */
@@ -67,6 +67,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
 .compose-left { display:flex; flex-direction:column; gap:6px; align-items:center; padding-top:4px; }
 .id-btn { width:28px; height:28px; border-radius:50%; background:var(--surface); border:1px solid var(--border); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; opacity:0.4; }
 .id-btn.active { opacity:1; border-color:var(--accent); transform:scale(1.1); }
+.id-display { width:34px; height:34px; border-radius:50%; background:var(--surface); border:1px solid var(--accent); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .compose-wrap { flex:1; }
 .compose-input { width:100%; height:38px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:9px 14px; font-size:16px; color:var(--text); font-family:"Courier New",monospace; outline:none; resize:none; display:block; }
 .compose-input::placeholder { color:#333; }
@@ -118,18 +119,21 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
     <div class="logo">UI<span>WHERE U MEETS I</span></div>
     <div class="header-right">
       <span id="userBarName" style="font-size:11px;color:var(--accent);letter-spacing:0.05em;"></span>
-      <div class="icon-btn">&#128269;</div>
+      <div class="icon-btn" id="searchBtn">&#128269;</div>
       <div class="icon-btn" id="bagBtn">&#129523;</div>
     </div>
   </div>
   <div class="filters">
-    <div class="filter-tab active">All</div>
-    <div class="filter-tab">&#128100; Human</div>
-    <div class="filter-tab">&#129302; AI</div>
-    <div class="filter-tab">&#129309; Mix</div>
-    <div class="filter-tab">&#128161; Tech</div>
-    <div class="filter-tab">&#128176; Value</div>
-    <div class="filter-tab">&#10084; Feel</div>
+    <div class="filter-tab active" id="filterAll" onclick="selectFilter('all')">&#127760; All</div>
+    <div class="filter-tab" id="filterHuman" onclick="selectFilter('human')">&#128100; Human</div>
+    <div class="filter-tab" id="filterAi" onclick="selectFilter('ai')">&#129302; AI</div>
+    <div class="filter-tab" id="filterMix" onclick="selectFilter('mix')">&#129309; Mix</div>
+    <div class="filter-tab" id="filterTech" onclick="selectFilter('tech')">&#128161; Tech</div>
+    <div class="filter-tab" id="filterValue" onclick="selectFilter('econ')">&#128176; Value</div>
+    <div class="filter-tab" id="filterFeel" onclick="selectFilter('emo')">&#10084; Feel</div>
+  </div>
+  <div class="search-row" id="searchRow" style="display:none;padding:8px 20px;border-bottom:1px solid var(--border);">
+    <input class="pack-input" id="searchInput" type="text" placeholder="search posts..." style="width:100%;">
   </div>
   <div class="feed-wrap" id="feedWrap">
     <div class="feed-scroller" id="feedScroller">
@@ -138,9 +142,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
   </div>
   <div class="compose-bar">
     <div class="compose-left">
-      <button class="id-btn active" id="idH" onclick="selectId(&quot;human&quot;)">&#128100;</button>
-      <button class="id-btn" id="idA" onclick="selectId(&quot;ai&quot;)">&#129302;</button>
-      <button class="id-btn" id="idM" onclick="selectId(&quot;mix&quot;)">&#129309;</button>
+      <div class="id-display" id="idDisplay" onclick="cycleIdentity()">&#128100;</div>
     </div>
     <div class="compose-wrap">
       <textarea class="compose-input" id="composeInput" rows="1" placeholder="value stays, junk burns"></textarea>
@@ -258,6 +260,20 @@ function startRealtime() {
 var userName = "you";
 var userType = "human";
 
+var idEmojiMap = { human: "&#128100;", ai: "&#129302;", mix: "&#129309;" };
+function updateIdDisplay() {
+  var el = document.getElementById("idDisplay");
+  if (el) el.innerHTML = idEmojiMap[identity] || idEmojiMap.human;
+}
+
+function cycleIdentity() {
+  identity = identity === "human" ? "ai" : identity === "ai" ? "mix" : "human";
+  updateIdDisplay();
+  try { localStorage.setItem("utype", identity); } catch(e){}
+  var labels = { human: "You are Human", ai: "You are AI", mix: "You are Mix" };
+  showToast(labels[identity]);
+}
+
 function wSelectId(id) {
   userType = id;
   document.getElementById("wIdH").classList.toggle("active", id === "human");
@@ -270,9 +286,7 @@ function enterUI() {
   if (name.length < 1) { document.getElementById("welcomeName").focus(); return; }
   userName = name;
   identity = userType;
-  document.getElementById("idH").classList.toggle("active", userType === "human");
-  document.getElementById("idA").classList.toggle("active", userType === "ai");
-  document.getElementById("idM").classList.toggle("active", userType === "mix");
+  updateIdDisplay();
   try { localStorage.setItem("uname", userName); localStorage.setItem("utype", userType); } catch(e){}
   document.getElementById("welcomeModal").style.display = "none";
   gems(diamonds);
@@ -290,10 +304,8 @@ try {
     userName = sn;
     userType = st || "human";
     identity = userType;
-    document.getElementById("idH").classList.toggle("active", userType === "human");
-    document.getElementById("idA").classList.toggle("active", userType === "ai");
-    document.getElementById("idM").classList.toggle("active", userType === "mix");
-      document.getElementById("welcomeModal").style.display = "none";
+    updateIdDisplay();
+    document.getElementById("welcomeModal").style.display = "none";
   }
 } catch(e){}
 
@@ -361,12 +373,58 @@ function resetBtn() {
   burnWarn.classList.remove("show");
 }
 
-function selectId(id) {
-  identity = id;
-  document.getElementById("idH").classList.toggle("active", id==="human");
-  document.getElementById("idA").classList.toggle("active", id==="ai");
-  document.getElementById("idM").classList.toggle("active", id==="mix");
+var currentFilter = "all";
+var searchQuery = "";
+
+function applyFilters() {
+  var id = currentFilter;
+  var cards = scroller.querySelectorAll(".card");
+  for (var i = 0; i < cards.length; i++) {
+    var show = true;
+    if (id === "human" || id === "ai" || id === "mix") {
+      show = !!cards[i].querySelector(".tag." + id);
+    } else if (id === "tech" || id === "econ" || id === "emo") {
+      show = !!cards[i].querySelector(".dot." + id + ".on");
+    }
+    if (show && searchQuery) {
+      var contentEl = cards[i].querySelector(".card-content");
+      var text = contentEl ? contentEl.textContent.toLowerCase() : "";
+      show = text.indexOf(searchQuery.toLowerCase()) > -1;
+    }
+    cards[i].style.display = show ? "" : "none";
+  }
 }
+
+function selectFilter(id) {
+  currentFilter = id;
+  document.getElementById("filterAll").classList.toggle("active", id === "all");
+  document.getElementById("filterHuman").classList.toggle("active", id === "human");
+  document.getElementById("filterAi").classList.toggle("active", id === "ai");
+  document.getElementById("filterMix").classList.toggle("active", id === "mix");
+  document.getElementById("filterTech").classList.toggle("active", id === "tech");
+  document.getElementById("filterValue").classList.toggle("active", id === "econ");
+  document.getElementById("filterFeel").classList.toggle("active", id === "emo");
+  applyFilters();
+}
+
+document.getElementById("searchBtn").addEventListener("click", function() {
+  var row = document.getElementById("searchRow");
+  var isHidden = row.style.display === "none";
+  row.style.display = isHidden ? "block" : "none";
+  if (isHidden) {
+    document.getElementById("searchInput").focus();
+  } else {
+    document.getElementById("searchInput").value = "";
+    searchQuery = "";
+    applyFilters();
+  }
+});
+
+document.getElementById("searchInput").addEventListener("input", function(e) {
+  searchQuery = e.target.value.trim();
+  applyFilters();
+});
+
 
 var CARD_LIFESPAN_MS = 90000;
 
