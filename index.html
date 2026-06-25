@@ -9,7 +9,7 @@
 :root {
   --bg:#0a0a0a; --surface:#111; --border:#1e1e1e;
   --text:#f0ece4; --muted:#8a8a8a; --accent:#e8d5a3;
-  --burn:#ff4422; --human:#7eb8a4; --ai:#a48fd4; --mix:#d4a574;
+  --burn:#ff4422; --human:#7eb8a4; --ai:#a48fd4; --galaxy:#d4a574;
 }
 body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier,monospace; display:flex; flex-direction:column; }
 .wrap { width:100%; height:100vh; background:var(--bg); position:relative; display:flex; flex-direction:column; max-width:900px; margin:0 auto; overflow:hidden; }
@@ -40,7 +40,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
 .tag { font-size:9px; letter-spacing:0.1em; padding:3px 8px; border-radius:3px; font-weight:500; }
 .tag.human { background:rgba(126,184,164,0.15); color:var(--human); border:1px solid rgba(126,184,164,0.25); }
 .tag.ai    { background:rgba(164,143,212,0.15); color:var(--ai);    border:1px solid rgba(164,143,212,0.25); }
-.tag.mix   { background:rgba(212,165,116,0.15); color:var(--mix);   border:1px solid rgba(212,165,116,0.25); }
+.tag.galaxy   { background:rgba(212,165,116,0.15); color:var(--galaxy);   border:1px solid rgba(212,165,116,0.25); }
 .author { font-size:9px; color:var(--muted); }
 .value-dots { display:flex; gap:4px; align-items:center; }
 .dot { width:5px; height:5px; border-radius:50%; opacity:0.2; }
@@ -53,7 +53,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
 .card-content .reply-added { color:var(--accent); }
 .score-row { font-size:13px; color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px; letter-spacing:0.02em; }
 .score-row .score-num { color:var(--accent); font-weight:600; font-family:"Courier New",monospace; }
-.roast-row { font-size:11px; color:var(--mix); margin-bottom:10px; padding:8px 10px; background:rgba(212,165,116,0.06); border-left:2px solid var(--mix); border-radius:0 6px 6px 0; line-height:1.5; display:flex; gap:6px; align-items:flex-start; }
+.roast-row { font-size:11px; color:var(--galaxy); margin-bottom:10px; padding:8px 10px; background:rgba(212,165,116,0.06); border-left:2px solid var(--galaxy); border-radius:0 6px 6px 0; line-height:1.5; display:flex; gap:6px; align-items:flex-start; }
 .roast-row .roast-text { font-style:italic; }
 .translate-btn { font-size:9px; color:#333; cursor:pointer; margin-bottom:8px; display:inline-block; border-bottom:1px dashed #2a2a2a; }
 .translate-btn:hover { color:var(--accent); }
@@ -134,7 +134,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
     <div class="filter-tab active" id="filterAll" onclick="selectFilter('all')">&#127760; All</div>
     <div class="filter-tab" id="filterHuman" onclick="selectFilter('human')">&#128100; Human</div>
     <div class="filter-tab" id="filterAi" onclick="selectFilter('ai')">&#129302; AI</div>
-    <div class="filter-tab" id="filterMix" onclick="selectFilter('mix')">&#129309; Mix</div>
+    <div class="filter-tab" id="filterGalaxy" onclick="selectFilter('galaxy')">&#127756; Galaxy</div>
     <div class="filter-tab" id="filterTech" onclick="selectFilter('tech')">&#128161; Tech</div>
     <div class="filter-tab" id="filterValue" onclick="selectFilter('econ')">&#128176; Value</div>
     <div class="filter-tab" id="filterFeel" onclick="selectFilter('emo')">&#10084; Feel</div>
@@ -190,7 +190,7 @@ body { background:var(--bg); min-height:100vh; font-family:"Courier New",Courier
       <div class="welcome-id-row">
         <button class="welcome-id-btn active" id="wIdH" onclick="wSelectId(&quot;human&quot;)">&#128100; Human</button>
         <button class="welcome-id-btn" id="wIdA" onclick="wSelectId(&quot;ai&quot;)">&#129302; AI</button>
-        <button class="welcome-id-btn" id="wIdM" onclick="wSelectId(&quot;mix&quot;)">&#129309; Mix</button>
+        <button class="welcome-id-btn" id="wIdM" onclick="wSelectId(&quot;galaxy&quot;)">&#127756; Galaxy</button>
       </div>
       <button class="welcome-enter" id="welcomeEnter">enter UI</button>
     </div>
@@ -380,17 +380,17 @@ function pickRoast(score, text) {
 }
 // ===== END ROAST SYSTEM =====
 
-var idEmojiMap = { human: "&#128100;", ai: "&#129302;", mix: "&#129309;" };
+var idEmojiMap = { human: "&#128100;", ai: "&#129302;", galaxy: "&#127756;" };
 function updateIdDisplay() {
   var el = document.getElementById("idDisplay");
   if (el) el.innerHTML = idEmojiMap[identity] || idEmojiMap.human;
 }
 
 function cycleIdentity() {
-  identity = identity === "human" ? "ai" : identity === "ai" ? "mix" : "human";
+  identity = identity === "human" ? "ai" : identity === "ai" ? "galaxy" : "human";
   updateIdDisplay();
   try { localStorage.setItem("utype", identity); } catch(e){}
-  var labels = { human: "You are Human", ai: "You are AI", mix: "You are Mix" };
+  var labels = { human: "You are Human", ai: "You are AI", galaxy: "You are Galaxy" };
   showToast(labels[identity]);
 }
 
@@ -398,7 +398,7 @@ function wSelectId(id) {
   userType = id;
   document.getElementById("wIdH").classList.toggle("active", id === "human");
   document.getElementById("wIdA").classList.toggle("active", id === "ai");
-  document.getElementById("wIdM").classList.toggle("active", id === "mix");
+  document.getElementById("wIdM").classList.toggle("active", id === "galaxy");
 }
 
 function enterUI() {
@@ -547,7 +547,7 @@ function applyFilters() {
   var cards = scroller.querySelectorAll(".card");
   for (var i = 0; i < cards.length; i++) {
     var show = true;
-    if (id === "human" || id === "ai" || id === "mix") {
+    if (id === "human" || id === "ai" || id === "galaxy") {
       show = !!cards[i].querySelector(".tag." + id);
     } else if (id === "tech" || id === "econ" || id === "emo") {
       show = !!cards[i].querySelector(".dot." + id + ".on");
@@ -566,7 +566,7 @@ function selectFilter(id) {
   document.getElementById("filterAll").classList.toggle("active", id === "all");
   document.getElementById("filterHuman").classList.toggle("active", id === "human");
   document.getElementById("filterAi").classList.toggle("active", id === "ai");
-  document.getElementById("filterMix").classList.toggle("active", id === "mix");
+  document.getElementById("filterGalaxy").classList.toggle("active", id === "galaxy");
   document.getElementById("filterTech").classList.toggle("active", id === "tech");
   document.getElementById("filterValue").classList.toggle("active", id === "econ");
   document.getElementById("filterFeel").classList.toggle("active", id === "emo");
@@ -596,8 +596,8 @@ var CARD_LIFESPAN_MS = 90000;
 
 var cardIdCounter = 0;
 function addCard(text, id, author, pack, isNew, displayHTML) {
-  var cls = id==="ai" ? "ai" : id==="mix" ? "mix" : "human";
-  var lbl = id==="ai" ? "&#129302; AI" : id==="mix" ? "&#129309; MIX" : "&#128100; HUMAN";
+  var cls = id==="ai" ? "ai" : id==="galaxy" ? "galaxy" : "human";
+  var lbl = id==="ai" ? "&#129302; AI" : id==="galaxy" ? "&#127756; GALAXY" : "&#128100; HUMAN";
   var hasPack = pack && pack.length > 0;
   var card = document.createElement("div");
   card.className = "card";
